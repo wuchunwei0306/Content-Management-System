@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BB Games 後台管理系統 Demo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:#1a1a1a;background:#f0f2f5;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.layout{display:flex;flex:1;overflow:hidden}
+.sidebar{width:210px;background:#fff;border-right:1px solid #eee;flex-shrink:0;overflow-y:auto;display:flex;flex-direction:column}
+.sidebar-logo{padding:14px 16px;font-size:15px;font-weight:700;color:#185FA5;border-bottom:1px solid #eee}
+.sidebar-section{padding:10px 0 4px}
+.sidebar-title{font-size:11px;color:#bbb;padding:4px 16px 6px;letter-spacing:.05em;font-weight:500}
+.nav-item{padding:9px 16px;font-size:13px;cursor:pointer;color:#666;border-left:3px solid transparent;transition:all .12s;display:flex;align-items:center;gap:7px}
+.nav-item:hover{background:#f5f7fa;color:#333}
+.nav-item.active{color:#185FA5;border-left-color:#185FA5;background:#EBF5FB;font-weight:500}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:#fff;border-bottom:1px solid #eee;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.page-title{font-size:16px;font-weight:600}
+.breadcrumb{font-size:12px;color:#bbb;margin-top:2px}
+.content{flex:1;padding:20px;overflow-y:auto}
+.btn{padding:7px 16px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;color:#333;transition:all .12s}
+.btn:hover{background:#f5f5f5}
+.btn-primary{background:#185FA5;color:#fff;border-color:#185FA5}
+.btn-primary:hover{background:#0C447C}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-danger{color:#c0392b;border-color:#f5b7b1}
+.btn-danger:hover{background:#fef0f0}
+.btn-success{color:#1e8449;border-color:#a9dfbf}
+.btn-success:hover{background:#eafaf1}
+.card{background:#fff;border-radius:10px;border:1px solid #eee;padding:16px;margin-bottom:16px}
+.card-0{padding:0}
+.filter-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.filter-group{display:flex;flex-direction:column;gap:4px}
+.filter-label{font-size:12px;color:#999}
+.range-row{display:flex;align-items:center;gap:6px}
+.range-sep{font-size:12px;color:#ccc}
+input,select,textarea{padding:7px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;background:#fff;color:#1a1a1a;outline:none}
+textarea{resize:vertical;min-height:80px;width:100%}
+input:focus,select:focus,textarea:focus{border-color:#185FA5;box-shadow:0 0 0 2px rgba(24,95,165,.1)}
+input:disabled,select:disabled{opacity:.5;cursor:not-allowed;background:#f8f8f8}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 14px;font-weight:500;font-size:12px;color:#999;border-bottom:1px solid #eee;background:#fafafa;white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid #f5f5f5;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafafa}
+.ops{display:flex;gap:5px;flex-wrap:wrap}
+.badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500}
+.badge-active{background:#D5F5E3;color:#1E8449}
+.badge-inactive{background:#f0f0f0;color:#666}
+.badge-ended{background:#FDEDEC;color:#922B21}
+.badge-sent{background:#D5F5E3;color:#1E8449}
+.badge-scheduled{background:#D6EAF8;color:#1A5276}
+.badge-disq{background:#FDEDEC;color:#922B21}
+.badge-valid{background:#D5F5E3;color:#1E8449}
+.badge-on{background:#D5F5E3;color:#1E8449}
+.badge-off{background:#f0f0f0;color:#888}
+.reward-tag{display:inline-flex;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:500;margin-bottom:2px}
+.reward-cash{background:#D5F5E3;color:#1E8449}
+.reward-spin{background:#D6EAF8;color:#1A5276}
+.reward-point{background:#E8DAEF;color:#6C3483}
+.uid-tag{display:inline-flex;padding:2px 8px;border-radius:6px;background:#f0f0f0;font-size:11px;margin:1px}
+.more-btn{display:inline-flex;padding:2px 8px;border-radius:6px;background:#EBF5FB;color:#185FA5;font-size:11px;cursor:pointer;border:none;margin:1px}
+.op-name{font-size:13px;font-weight:500}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:12px;width:100%;margin:auto;max-height:92vh;overflow-y:auto;border:1px solid #ddd;box-shadow:0 8px 32px rgba(0,0,0,.12)}
+.modal-lg{max-width:860px}
+.modal-md{max-width:640px}
+.modal-sm{max-width:480px}
+.modal-header{padding:16px 20px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:flex-start;position:sticky;top:0;background:#fff;z-index:1}
+.modal-title{font-size:15px;font-weight:600}
+.modal-sub{font-size:12px;color:#aaa;margin-top:2px}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:#bbb;line-height:1;padding:0}
+.modal-close:hover{color:#333}
+.modal-body{padding:20px}
+.modal-footer{padding:14px 20px;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:10px;position:sticky;bottom:0;background:#fff}
+.tabs{display:flex;border-bottom:1px solid #eee;overflow-x:auto;background:#fafafa;flex-shrink:0}
+.tab{padding:10px 14px;font-size:12px;cursor:pointer;color:#888;border-bottom:2px solid transparent;white-space:nowrap;margin-bottom:-1px;transition:all .12s}
+.tab.active{color:#185FA5;border-bottom-color:#185FA5;font-weight:600;background:#fff}
+.tab:hover:not(.active){color:#333}
+.tab-panel{display:none;padding:20px}
+.tab-panel.active{display:block}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-group{display:flex;flex-direction:column;gap:5px;width:100%}
+.full{grid-column:1/-1}
+.label{font-size:12px;color:#666;font-weight:500}
+.req{color:#c0392b}
+.hint{font-size:11px;color:#bbb;margin-top:2px}
+.section-title{font-size:13px;font-weight:600;padding-bottom:8px;border-bottom:1px solid #eee;margin:16px 0 12px;color:#333}
+.section-title:first-child{margin-top:0}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f5f5f5}
+.toggle-label{font-size:13px;font-weight:500}
+.toggle-sub{font-size:11px;color:#bbb;margin-top:2px}
+.toggle{position:relative;width:36px;height:20px;cursor:pointer;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;inset:0;background:#ddd;border-radius:10px;transition:.2s}
+.toggle-slider:before{content:'';position:absolute;width:16px;height:16px;left:2px;top:2px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle input:checked+.toggle-slider{background:#185FA5}
+.toggle input:checked+.toggle-slider:before{transform:translateX(16px)}
+.info-box{background:#EBF5FB;border:1px solid #AED6F1;border-radius:8px;padding:10px 14px;font-size:12px;color:#1A5276;margin:10px 0}
+.warn-box{background:#FEF9E7;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin:10px 0}
+.error-box{background:#FDEDEC;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;font-size:12px;color:#922B21;margin:10px 0}
+.upload-box{border:1px dashed #ddd;border-radius:8px;padding:16px;text-align:center;cursor:pointer;background:#fafafa;transition:all .12s}
+.upload-box:hover{border-color:#185FA5;background:#EBF5FB}
+.rank-item{border:1px solid #eee;border-radius:8px;padding:12px;margin-bottom:10px;background:#fafafa}
+.rank-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.rank-badge{display:inline-flex;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500}
+.rank-single{background:#D5F5E3;color:#1E8449}
+.rank-range{background:#D6EAF8;color:#1A5276}
+.reward-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.game-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;background:#f0f0f0;border:1px solid #e5e5e5;font-size:12px;margin:2px}
+.game-tag .rm{cursor:pointer;color:#bbb;font-size:15px;line-height:1}
+.game-tag .rm:hover{color:#c0392b}
+.locked-tag{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;background:#f5f5f5;border:1px solid #eee;font-size:12px;margin:2px;opacity:.55;cursor:not-allowed}
+.selected-area{border:1px solid #eee;border-radius:8px;padding:12px;min-height:50px;margin-top:10px;background:#fafafa}
+.selected-label{font-size:11px;color:#999;font-weight:500;margin-bottom:6px}
+.dispatch-config{display:none;margin-top:10px;padding:12px;background:#f8f9fa;border-radius:8px;border:1px solid #eee}
+.dispatch-config.show{display:block}
+.log-filter{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.log-tag{padding:4px 12px;border-radius:20px;font-size:12px;border:1px solid #ddd;cursor:pointer;background:#fff}
+.log-tag.active{background:#EBF5FB;color:#185FA5;border-color:#185FA5}
+.log-item{padding:14px 0;border-bottom:1px solid #f5f5f5}
+.log-item:last-child{border-bottom:none}
+.log-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.diff-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
+.diff-table th{background:#f8f8f8;padding:6px 10px;font-weight:500;font-size:11px;color:#999;border:1px solid #eee}
+.diff-table td{padding:6px 10px;border:1px solid #eee;vertical-align:top}
+.diff-before{color:#922B21;background:#FDEDEC;border-radius:4px;padding:1px 5px}
+.diff-after{color:#1E8449;background:#D5F5E3;border-radius:4px;padding:1px 5px}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:#f8f9fa;border-radius:8px;padding:12px;border:1px solid #eee}
+.stat-label{font-size:12px;color:#999;margin-bottom:4px}
+.stat-val{font-size:20px;font-weight:600}
+.rank-num{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+.rn-1{background:#FAEEDA;color:#412402}.rn-2{background:#f0f0f0;color:#333}.rn-3{background:#FAECE7;color:#4A1B0C}.rn-n{background:#f5f5f5;color:#aaa}
+.disq-row td{color:#ccc;text-decoration:line-through}
+.disq-row td:last-child,.disq-row td:first-child{text-decoration:none}
+.risk-card{background:#fff;border:1px solid #eee;border-radius:10px;margin-bottom:10px;overflow:hidden}
+.risk-header{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.risk-header:hover{background:#fafafa}
+.risk-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.risk-body{padding:0 16px 16px;border-top:1px solid #f5f5f5;display:none}
+.risk-body.open{display:block}
+.risk-tag{display:inline-flex;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500}
+.rt-ip{background:#E8DAEF;color:#6C3483}.rt-agent{background:#D6EAF8;color:#1A5276}.rt-cpf{background:#FEF9E7;color:#856404}.rt-game{background:#D5F5E3;color:#1E8449}.rt-flow{background:#FDEDEC;color:#922B21}
+.params-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}
+.url-row{display:flex;align-items:center;gap:8px}
+.url-icon{font-size:16px;flex-shrink:0;width:22px;text-align:center}
+.alert-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center}
+.alert-overlay.open{display:flex}
+.alert-box{background:#fff;border-radius:12px;padding:24px;width:400px;max-width:92vw;border:1px solid #ddd}
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center}
+.confirm-overlay.open{display:flex}
+.confirm-box{background:#fff;border-radius:12px;padding:24px;width:380px;max-width:92vw;border:1px solid #ddd}
+.page{display:none}
+.page.active{display:block}
+</style>
+</head>
+<body>
+<div class="layout">
+<div class="sidebar">
+  <div class="sidebar-logo">BB Games 後台</div>
+  <div class="sidebar-section">
+    <div class="sidebar-title">運營活動</div>
+    <div class="nav-item active" onclick="showPage('tournament',this)">🏆 錦標賽</div>
+    <div class="nav-item" onclick="showPage('collect',this)">🃏 集卡活動</div>
+    <div class="nav-item">🏪 積分商城</div>
+    <div class="nav-item">⚙️ 活動模組配置</div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-title">系統管理</div>
+    <div class="nav-item" onclick="showPage('risk',this)">🛡 風控管理</div>
+    <div class="nav-item" onclick="showPage('inbox',this)">✉️ 站內信</div>
+    <div class="nav-item">📢 渠道管理</div>
+    <div class="nav-item">🎧 客服工單</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="pageTitle">錦標賽管理</div>
+      <div class="breadcrumb" id="pageBreadcrumb">運營活動 / 錦標賽</div>
+    </div>
+    <div id="topActions"><button class="btn btn-primary" onclick="openNew()">＋ 新增錦標賽</button></div>
+  </div>
+  <div class="content">
+
+    <!-- 錦標賽 -->
+    <div class="page active" id="page-tournament">
+      <div class="card">
+        <div class="filter-row">
+          <div class="filter-group"><div class="filter-label">名稱</div><input type="text" placeholder="請輸入名稱" style="width:150px"></div>
+          <div class="filter-group"><div class="filter-label">狀態</div><select style="width:110px"><option>全部</option><option>進行中</option><option>未開始</option><option>已結束</option></select></div>
+          <div class="filter-group"><div class="filter-label">活動時間（區間）</div><div class="range-row"><input type="date" style="width:136px"><span class="range-sep">至</span><input type="date" style="width:136px"></div></div>
+          <div class="filter-group"><div class="filter-label">操作人</div><input type="text" placeholder="帳號" style="width:100px"></div>
+          <div class="filter-group"><div class="filter-label">&nbsp;</div><div style="display:flex;gap:8px"><button class="btn btn-primary">查詢</button><button class="btn">重置</button></div></div>
+        </div>
+      </div>
+      <div class="card card-0" style="overflow-x:auto">
+        <table>
+          <thead><tr><th>錦標賽名稱</th><th>活動時間</th><th>獎勵類型</th><th>狀態</th><th>操作人</th><th>操作時間</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td style="font-weight:600">世界杯體育錦標賽</td><td style="font-size:12px;color:#999">2026/01/01 – 2026/01/31</td><td><span class="reward-tag reward-cash">彩金</span> <span class="reward-tag reward-spin">FS</span></td><td><span class="badge badge-active">進行中</span></td><td><span style="font-size:13px;font-weight:500">admin_chen</span></td><td><span style="font-size:12px;color:#bbb">2026/01/28 15:42</span></td><td><div class="ops"><button class="btn btn-sm btn-danger">關閉</button><button class="btn btn-sm" onclick="openView()">查看配置</button><button class="btn btn-sm" onclick="openEdit()">編輯</button><button class="btn btn-sm" onclick="openData()">活動數據</button><button class="btn btn-sm" onclick="openLog(0)">操作日誌</button></div></td></tr>
+            <tr><td style="font-weight:600">老虎機月度錦標賽</td><td style="font-size:12px;color:#999">2026/02/01 – 2026/02/28</td><td><span class="reward-tag reward-point">積分</span></td><td><span class="badge badge-inactive">未開始</span></td><td><span style="font-size:13px;font-weight:500">admin_wang</span></td><td><span style="font-size:12px;color:#bbb">2026/01/25 14:38</span></td><td><div class="ops"><button class="btn btn-sm btn-success">開啟</button><button class="btn btn-sm" onclick="openView()">查看配置</button><button class="btn btn-sm" onclick="openEdit()">編輯</button><button class="btn btn-sm" onclick="openData()">活動數據</button><button class="btn btn-sm" onclick="openLog(1)">操作日誌</button></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 集卡活動 -->
+    <div class="page" id="page-collect">
+      <div class="card"><div class="filter-row"><div class="filter-group"><div class="filter-label">活動名稱</div><input type="text" placeholder="請輸入名稱" style="width:160px"></div><div class="filter-group"><div class="filter-label">狀態</div><select style="width:110px"><option>全部</option><option>進行中</option><option>未開始</option><option>已結束</option></select></div><div class="filter-group"><div class="filter-label">&nbsp;</div><div style="display:flex;gap:8px"><button class="btn btn-primary">查詢</button><button class="btn">重置</button></div></div></div></div>
+      <div class="card card-0"><table><thead><tr><th>活動名稱</th><th>卡片數量</th><th>活動時間</th><th>獎勵類型</th><th>狀態</th><th>操作人</th><th>操作時間</th><th>操作</th></tr></thead><tbody><tr><td style="font-weight:600">五福集卡活動</td><td>5 張</td><td style="font-size:12px;color:#999">2026/01/01 – 2026/01/31</td><td><span class="reward-tag reward-cash">彩金</span></td><td><span class="badge badge-active">進行中</span></td><td><span style="font-size:13px;font-weight:500">admin_chen</span></td><td><span style="font-size:12px;color:#bbb">2026/01/01 09:00</span></td><td><div class="ops"><button class="btn btn-sm btn-danger">關閉</button><button class="btn btn-sm">查看配置</button><button class="btn btn-sm">編輯</button><button class="btn btn-sm">活動數據</button></div></td></tr></tbody></table></div>
+    </div>
+
+    <!-- 風控管理 -->
+    <div class="page" id="page-risk">
+      <div class="card" style="padding:12px 16px;margin-bottom:16px"><div style="display:flex;align-items:center;justify-content:space-between"><div style="font-size:13px;color:#666">共 9 條風控規則　<span style="color:#1E8449;font-weight:500">7 條啟用</span>　<span style="color:#bbb">2 條關閉</span></div><div style="display:flex;gap:8px"><select style="width:130px;font-size:12px"><option>全部類型</option><option>IP / 帳號</option><option>代理風控</option><option>CPF 相關</option><option>遊戲行為</option><option>流水管控</option></select><select style="width:110px;font-size:12px"><option>全部狀態</option><option>已啟用</option><option>已關閉</option></select></div></div></div>
+      <div id="riskList"></div>
+    </div>
+
+    <!-- 站內信 -->
+    <div class="page" id="page-inbox">
+      <div class="card"><div class="filter-row"><div class="filter-group"><div class="filter-label">發送標題</div><input type="text" placeholder="請輸入標題" style="width:160px"></div><div class="filter-group"><div class="filter-label">發送狀態</div><select style="width:120px"><option>全部</option><option>已發送</option><option>預約發送</option></select></div><div class="filter-group"><div class="filter-label">發送時間（區間）</div><div class="range-row"><input type="date" style="width:136px"><span class="range-sep">至</span><input type="date" style="width:136px"></div></div><div class="filter-group"><div class="filter-label">操作人</div><input type="text" placeholder="帳號" style="width:100px"></div><div class="filter-group"><div class="filter-label">&nbsp;</div><div style="display:flex;gap:8px"><button class="btn btn-primary">查詢</button><button class="btn">重置</button></div></div></div></div>
+      <div class="card card-0" style="overflow-x:auto"><table><thead><tr><th>發送標題</th><th>發送內容</th><th>接收玩家 UID</th><th>發送狀態</th><th>操作人</th><th>操作時間</th><th>操作</th></tr></thead><tbody id="inboxTable"></tbody></table></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- CONFIG MODAL -->
+<div class="overlay" id="configModal">
+<div class="modal modal-lg">
+  <div class="modal-header"><div><div class="modal-title" id="configTitle">錦標賽配置</div><div class="modal-sub" id="configSub"></div></div><button class="modal-close" onclick="closeConfig()">×</button></div>
+  <div class="tabs"><div class="tab active" onclick="switchTab(this,'t1')">基本設定</div><div class="tab" onclick="switchTab(this,'t2')">參加條件</div><div class="tab" onclick="switchTab(this,'t3')">獎勵設定</div><div class="tab" onclick="switchTab(this,'t4')">排行設定</div><div class="tab" onclick="switchTab(this,'t5')">適用遊戲</div><div class="tab" onclick="switchTab(this,'t6')">限制參與</div></div>
+  <div class="tab-panel active" id="t1">
+    <div class="form-grid">
+      <div class="form-group full"><div class="label">錦標賽名稱 <span class="req">*</span></div><input type="text" id="tName" placeholder="請輸入錦標賽名稱"></div>
+      <div class="form-group"><div class="label">活動開始時間 <span class="req">*</span></div><input type="datetime-local" id="tStart"></div>
+      <div class="form-group"><div class="label">活動結束時間 <span class="req">*</span></div><input type="datetime-local" id="tEnd"></div>
+      <div class="form-group"><div class="label">渠道限制</div><select><option>全部渠道</option><option>指定渠道</option></select></div>
+      <div class="form-group full"><div class="section-title">圖片與文案設定</div></div>
+      <div class="form-group full"><div class="label">主視覺入口圖 <span class="req">*</span></div><div class="upload-box"><div style="font-size:13px;color:#888">點擊上傳主視覺圖片</div><div style="font-size:11px;color:#bbb;margin-top:4px">尺寸：1200 × 400px　格式：PNG / SVG / JPG　大小上限：2MB</div></div></div>
+      <div class="form-group full"><div class="label">列表縮圖 <span class="req">*</span></div><div class="upload-box"><div style="font-size:13px;color:#888">點擊上傳列表縮圖</div><div style="font-size:11px;color:#bbb;margin-top:4px">尺寸：400 × 300px　格式：PNG / SVG / JPG　大小上限：2MB</div></div></div>
+      <div class="form-group full"><div class="label">獎金金額說明</div><input type="text" placeholder="例：75,000 R$"><div class="hint">顯示於 C 端主視覺圖片上</div></div>
+      <div class="form-group full"><div class="label">活動說明文字</div><textarea placeholder="輸入活動說明，顯示於 C 端活動詳情頁"></textarea></div>
+    </div>
+  </div>
+  <div class="tab-panel" id="t2">
+    <div class="section-title">VIP 等級條件</div>
+    <div class="form-group" style="max-width:200px"><div class="label">最低 VIP 等級 <span class="req">*</span></div><select><option>VIP 1</option><option>VIP 2</option><option>VIP 3</option></select><div class="hint">達到設定等級以上均可參加</div></div>
+    <div class="section-title">門票設定</div>
+    <div class="toggle-row"><div><div class="toggle-label">啟用門票機制</div><div class="toggle-sub">開啟後，會員需同時符合 VIP 等級及持有有效門票才可參加</div></div><label class="toggle"><input type="checkbox" id="ticketToggle" onchange="toggleTicket()"><span class="toggle-slider"></span></label></div>
+    <div id="ticketConfig" class="dispatch-config"><div class="form-grid" style="margin-top:0"><div class="form-group"><div class="label">門票取得條件（當日投注金額）<span class="req">*</span></div><div style="display:flex;align-items:center;gap:8px"><input type="number" value="1000" style="width:100px"><span style="font-size:13px;color:#888">元（自然日 00:00–23:59）</span></div><div class="hint">達標後即時自動派發，並發送站內信通知</div></div><div class="form-group"><div class="label">每人限領數量</div><input value="每個錦標賽限 1 張" disabled></div><div class="form-group full"><div class="label">門票有效期</div><input value="與錦標賽活動期間相同，活動結束後自動失效" disabled></div></div></div>
+  </div>
+  <div class="tab-panel" id="t3">
+    <div class="section-title">派發方式</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px"><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="radio" name="dispatch" value="auto" checked onchange="toggleDispatch(this)"> 自動派發（活動結算後系統自動發放）</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="radio" name="dispatch" value="manual" onchange="toggleDispatch(this)"> 手動領取（會員需在期限內自行領取）</label></div>
+    <div id="manualConfig" class="dispatch-config"><div class="form-group" style="max-width:280px"><div class="label">手動領取期限 <span class="req">*</span></div><div style="display:flex;align-items:center;gap:8px"><input type="number" value="7" style="width:80px"><span style="font-size:13px;color:#888">天（派發當下起算）</span></div></div></div>
+    <div class="section-title">積分比例配置</div>
+    <div class="form-grid"><div class="form-group"><div class="label">投注積分比例 <span class="req">*</span></div><div style="display:flex;align-items:center;gap:8px"><input type="number" value="5" style="width:80px"><span style="font-size:13px;color:#888">元 = 1 積分</span></div><div class="hint">保留小數點後一位，例：7 元 = 1.4 積分</div></div><div class="form-group"><div class="label">積分有效期 <span class="req">*</span></div><select style="width:150px"><option>1 個月</option><option>3 個月</option><option selected>6 個月</option><option>12 個月</option></select><div class="hint">積分用於積分商城，無流水限制</div></div></div>
+    <div class="section-title">獎勵效期與流水設定</div>
+    <div class="form-grid"><div class="form-group"><div class="label">彩金效期 <span class="req">*</span></div><div style="display:flex;align-items:center;gap:8px"><input type="number" value="30" style="width:80px"><span style="font-size:13px;color:#888">天（獲取後起算）</span></div><div class="hint">到期未使用自動作廢，流水限制同步解除</div></div><div class="form-group"><div class="label">彩金流水倍數 <span class="req">*</span></div><div style="display:flex;align-items:center;gap:8px"><input type="number" value="3" style="width:80px"><span style="font-size:13px;color:#888">倍（全場館計算）</span></div><div class="hint">未達流水取款時攔截，C 端顯示流水清單</div></div><div class="form-group"><div class="label">Free Spins 效期 <span class="req">*</span></div><div style="display:flex;align-items:center;gap:8px"><input type="number" value="7" style="width:80px"><span style="font-size:13px;color:#888">天（獲取後起算）</span></div></div></div>
+    <div class="section-title">名次獎勵配置</div>
+    <div id="rankList"></div>
+    <button class="btn btn-sm" onclick="openAddRank()" style="margin-top:8px">＋ 新增名次</button>
+    <div class="info-box">未設定名次的排名顯示「無獎勵」，仍列於排行榜。名次區間重疊時無法儲存。</div>
+  </div>
+  <div class="tab-panel" id="t4">
+    <div class="info-box">排行以積分為依據，沿用獎勵設定中的投注積分比例。排行維度於進行中後鎖定，不可變更。</div>
+    <div class="form-grid" style="margin-top:12px"><div class="form-group full"><div class="label">計算週期</div><input value="以整個活動期間累計，每個錦標賽獨立計算" disabled></div><div class="form-group"><div class="label">更新頻率</div><input value="每 5 分鐘更新一次" disabled></div><div class="form-group"><div class="label">帳號顯示方式</div><input value="前 3 個字元顯示，後面全部以 * 遮蔽" disabled></div></div>
+    <div class="section-title">同積分排行規則</div>
+    <div style="padding:12px;background:#f8f9fa;border-radius:8px;font-size:13px;color:#666;line-height:1.8;border:1px solid #eee">積分相同時，以先達到該積分的時間決定排名，時間早者排名較前。<br><span style="color:#bbb;font-size:12px">範例：B（05:00:00）、C（05:05:00）、A（05:05:10）積分同為 500，排名 B → C → A</span></div>
+    <div class="section-title">顯示設定</div>
+    <div class="form-group" style="max-width:300px"><div class="label">公開顯示前 N 名 <span class="req">*</span></div><div style="display:flex;align-items:center;gap:8px"><input type="number" value="100" id="rankDisplay" style="width:80px" oninput="checkRankMin()"><span style="font-size:13px;color:#888">名（最小值 50）</span></div><div class="hint">超出前 N 名的會員仍可查看排行榜，個人區塊顯示當前名次與積分</div></div>
+    <div id="rankMinWarn" class="error-box" style="display:none">排行榜顯示名次最少需設定 50 名。</div>
+  </div>
+  <div class="tab-panel" id="t5">
+    <div class="section-title">遊戲搜尋</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px">
+      <div style="display:flex;flex-direction:column;gap:4px"><div class="label">廠家</div><select id="s1" style="width:120px" onchange="updateS2()"><option value="">全部</option><option value="pg">PG Soft</option><option value="evo">Evolution</option><option value="cq9">CQ9</option></select></div>
+      <div style="display:flex;flex-direction:column;gap:4px"><div class="label">遊戲類型</div><select id="s2" style="width:120px" onchange="updateS3()"><option value="">全部</option></select></div>
+      <div style="display:flex;flex-direction:column;gap:4px"><div class="label">子遊戲</div><select id="s3" style="width:120px"><option value="">全部</option></select></div>
+      <div style="display:flex;flex-direction:column;gap:4px"><div class="label">模糊搜尋</div><input type="text" id="fuzzy" placeholder="遊戲名稱" style="width:140px"></div>
+      <div style="display:flex;flex-direction:column;gap:4px"><div class="label">&nbsp;</div><button class="btn btn-primary btn-sm" onclick="doSearch()">搜尋</button></div>
+    </div>
+    <div id="searchResult" style="display:none;margin-bottom:12px"><div class="label" style="margin-bottom:8px">搜尋結果</div><div id="resultList" style="border:1px solid #eee;border-radius:8px;padding:10px;background:#fafafa;display:flex;flex-wrap:wrap;gap:6px;min-height:40px"></div></div>
+    <div class="selected-area"><div class="selected-label">已選遊戲（<span id="selCount">3</span> 款）</div><div id="selectedGames"></div></div>
+    <div class="warn-box" id="gameLockedWarn" style="display:none">活動進行中，已選遊戲不可移除，僅可新增。</div>
+    <div id="gameMinWarn" class="error-box" style="display:none">適用遊戲至少需選擇 2 款。</div>
+  </div>
+  <div class="tab-panel" id="t6">
+    <div class="section-title">異常帳號排除</div>
+    <div class="toggle-row"><div><div class="toggle-label">排除同 IP 帳號</div><div class="toggle-sub">相同 IP 登入的多個帳號，觸發時不列入排名，投注記錄仍保留</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+    <div class="toggle-row"><div><div class="toggle-label">排除同裝置帳號</div><div class="toggle-sub">相同設備號登入的多個帳號，觸發時不列入排名，投注記錄仍保留</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+    <div class="info-box">被排除帳號不顯示於排行榜，亦不發放獎勵，但其投注數據仍正常記錄。</div>
+    <div class="section-title">場館重疊提示</div>
+    <div class="warn-box">目前「B 體育」場館與「老虎機月度錦標賽」的適用場館重疊，會員在該場館的投注將同時計入兩個錦標賽的積分計算。</div>
+  </div>
+  <div class="modal-footer"><button class="btn" onclick="closeConfig()">取消</button><button class="btn btn-primary" id="saveBtn" onclick="checkSave()">儲存配置</button></div>
+</div>
+</div>
+
+<!-- DATA MODAL -->
+<div class="overlay" id="dataModal">
+<div class="modal modal-lg">
+  <div class="modal-header"><div><div class="modal-title">活動數據</div><div class="modal-sub">世界杯體育錦標賽</div></div><button class="modal-close" onclick="closeData()">×</button></div>
+  <div class="modal-body">
+    <div class="stat-grid"><div class="stat-card"><div class="stat-label">參加人數</div><div class="stat-val">1,284</div></div><div class="stat-card"><div class="stat-label">累計投注金額</div><div class="stat-val">$4,832,100</div></div><div class="stat-card"><div class="stat-label">已發放獎勵</div><div class="stat-val">$128,500</div></div><div class="stat-card"><div class="stat-label">已取消資格</div><div class="stat-val" id="disqCount">1</div></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:13px;font-weight:600">當前排行榜</div><div style="display:flex;gap:8px"><input type="text" id="searchPlayer" placeholder="搜尋帳號" style="width:150px" oninput="filterRank()"><select id="filterStatus" onchange="filterRank()" style="width:120px"><option value="all">全部狀態</option><option value="valid">有效</option><option value="disq">已取消</option></select><button class="btn btn-sm">匯出報表</button></div></div>
+    <table><thead><tr><th>名次</th><th>帳號</th><th>積分</th><th>投注金額</th><th>獲利金額</th><th>獎勵</th><th>狀態</th><th>操作</th></tr></thead><tbody id="rankBody"></tbody></table>
+    <div class="info-box" style="margin-top:14px">取消資格後不列入排名，名次自動遞補。可隨時恢復資格。</div>
+  </div>
+  <div class="modal-footer"><button class="btn" onclick="closeData()">關閉</button></div>
+</div>
+</div>
+
+<!-- LOG MODAL -->
+<div class="overlay" id="logModal">
+<div class="modal modal-md">
+  <div class="modal-header"><div><div class="modal-title">操作日誌</div><div class="modal-sub" id="logSub"></div></div><button class="modal-close" onclick="closeLog()">×</button></div>
+  <div class="modal-body"><div class="log-filter"><div class="log-tag active" onclick="flog(this,'all')">全部</div><div class="log-tag" onclick="flog(this,'add')">新增</div><div class="log-tag" onclick="flog(this,'edit')">修改</div></div><div id="logList"></div></div>
+  <div class="modal-footer"><button class="btn" onclick="closeLog()">關閉</button><button class="btn btn-primary">匯出日誌</button></div>
+</div>
+</div>
+
+<!-- ADD RANK -->
+<div class="confirm-overlay" id="addRankModal">
+<div class="confirm-box">
+  <div style="font-size:15px;font-weight:600;margin-bottom:16px">新增名次獎勵</div>
+  <div class="form-group" style="margin-bottom:12px"><div class="label">名次類型</div><div style="display:flex;gap:16px;margin-top:6px"><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="radio" name="rtype" value="single" checked onchange="toggleRankType()"> 單一名次</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="radio" name="rtype" value="range" onchange="toggleRankType()"> 區間名次</label></div></div>
+  <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px"><div class="form-group"><div class="label">開始名次</div><input type="number" id="rankFrom" min="1" value="11" style="width:90px"></div><div id="rankToWrap" style="display:none"><div class="form-group"><div class="label">結束名次</div><input type="number" id="rankTo" min="1" value="20" style="width:90px"></div></div></div>
+  <div id="overlapWarn" class="error-box" style="display:none"></div>
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px"><button class="btn btn-sm" onclick="closeAddRank()">取消</button><button class="btn btn-primary btn-sm" onclick="confirmAddRank()">新增</button></div>
+</div>
+</div>
+
+<!-- DISQ -->
+<div class="confirm-overlay" id="disqModal">
+<div class="confirm-box">
+  <div style="font-size:15px;font-weight:600;margin-bottom:8px" id="disqTitle"></div>
+  <div style="font-size:13px;color:#666;margin-bottom:16px;line-height:1.6" id="disqBody"></div>
+  <div class="form-group" style="margin-bottom:16px"><div class="label">備註原因（選填）</div><input type="text" id="disqReason" placeholder="請輸入原因"></div>
+  <div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-sm" onclick="closeDisq()">取消</button><button class="btn btn-sm" id="disqBtn" onclick="doDisq()">確認</button></div>
+</div>
+</div>
+
+<!-- UID POPUP -->
+<div class="confirm-overlay" id="uidModal">
+<div class="confirm-box">
+  <div style="font-size:15px;font-weight:600;margin-bottom:12px">接收玩家 UID 清單</div>
+  <div id="uidList" style="display:flex;flex-wrap:wrap;gap:6px;max-height:200px;overflow-y:auto;margin-bottom:16px"></div>
+  <div style="display:flex;justify-content:flex-end"><button class="btn btn-sm" onclick="document.getElementById('uidModal').classList.remove('open')">關閉</button></div>
+</div>
+</div>
+
+<!-- INBOX MODAL -->
+<div class="overlay" id="inboxModal">
+<div class="modal modal-md">
+  <div class="modal-header"><div><div class="modal-title" id="inboxModalTitle">新增站內信</div></div><button class="modal-close" onclick="closeInbox()">×</button></div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="form-group full">
+        <div class="label">發送對象 <span class="req">*</span></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="inboxTarget" onchange="toggleInboxTarget()" style="width:140px"><option value="all">所有會員</option><option value="uid">指定 UID</option></select>
+          <button class="btn btn-sm" id="importUidBtn" style="display:none" onclick="showAlert('批量匯入 UID','支援 Excel 格式（.xlsx / .xls），第一欄為 UID，系統自動解析匯入。')">📥 批量匯入 Excel</button>
+        </div>
+        <div id="uidInput" style="display:none;margin-top:8px"><textarea id="uidText" placeholder="每行輸入一個 UID，例：&#10;123456&#10;789012" style="height:80px"></textarea><div class="hint">手動輸入或透過上方按鈕批量匯入</div></div>
+      </div>
+      <div class="form-group full">
+        <div class="label">發送標題 <span class="req">*</span></div>
+        <input type="text" id="inboxTitle" maxlength="50" placeholder="最多 50 個字元" oninput="updateTitleCount()">
+        <div style="display:flex;justify-content:flex-end"><span id="titleCount" style="font-size:11px;color:#bbb">0 / 50</span></div>
+      </div>
+      <div class="form-group full"><div class="label">發送內容 <span class="req">*</span></div><textarea id="inboxContent" placeholder="請輸入發送內容（無字元限制）" style="min-height:100px"></textarea></div>
+      <div class="form-group full">
+        <div class="label">配置外鏈</div>
+        <div class="url-row"><input type="text" id="externalUrl" placeholder="輸入網址（無需輸入 https://）" style="flex:1" oninput="validateUrl()"><span id="urlIcon" class="url-icon"></span></div>
+        <div class="hint">輸入後自動驗證網址有效性（綠色 ✅ 為有效，紅色 ❌ 為無效）</div>
+      </div>
+      <div class="form-group"><div class="label">外鏈按鈕文字</div><input type="text" id="externalText" placeholder="例：立即前往"><div class="hint">C 端以超鏈接按鈕呈現，不顯示完整網址</div></div>
+      <div class="form-group"><div class="label">配置內鏈</div><select id="internalLink"><option value="">不配置</option><option>首頁</option><option>個人中心</option><option>充值頁面</option><option>取款頁面</option><option>積分商城</option><option>錦標賽頁面</option><option>集卡活動頁面</option><option>VIP 頁面</option><option>活動中心</option></select></div>
+      <div class="form-group"><div class="label">內鏈按鈕文字</div><input type="text" id="internalText" placeholder="例：查看活動"><div class="hint">C 端以超鏈接按鈕呈現，不顯示連結路徑</div></div>
+      <div class="form-group full">
+        <div class="label">發送邏輯 <span class="req">*</span></div>
+        <div style="display:flex;gap:16px;margin-top:4px"><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="radio" name="sendType" value="now" checked onchange="toggleSendType()"> 立即發送</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="radio" name="sendType" value="schedule" onchange="toggleSendType()"> 預約發送</label></div>
+        <div id="scheduleConfig" style="display:none;margin-top:8px"><input type="datetime-local" id="scheduleTime"><div class="hint">到達預約時間後系統自動發送</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer"><button class="btn" onclick="closeInbox()">取消</button><button class="btn btn-primary" onclick="saveInbox()">確認發送</button></div>
+</div>
+</div>
+
+<!-- ALERT -->
+<div class="alert-overlay" id="alertModal">
+<div class="alert-box">
+  <div style="font-size:15px;font-weight:600;margin-bottom:8px" id="alertTitle"></div>
+  <div style="font-size:13px;color:#555;margin-bottom:20px;line-height:1.6;white-space:pre-line" id="alertBody"></div>
+  <div style="display:flex;justify-content:flex-end"><button class="btn btn-primary btn-sm" onclick="document.getElementById('alertModal').classList.remove('open')">確認</button></div>
+</div>
+</div>
+
+<script>
+const gameData={pg:{slots:['Fortune Tiger','Fortune Rabbit','Lucky Cat','Mahjong Ways'],live:[]},evo:{slots:[],live:['Baccarat A','Lightning Roulette','Crazy Time']},cq9:{slots:['Lucky Cat','Ocean King','Dancing Fever'],live:[]}};
+let selectedGames=[{name:'Fortune Tiger',vendor:'PG Soft',locked:true},{name:'Fortune Rabbit',vendor:'PG Soft',locked:true},{name:'Lucky Cat',vendor:'CQ9',locked:false}];
+let ranks=[{type:'single',from:1,to:1,cash:5000,spins:100,points:500},{type:'range',from:2,to:10,cash:1000,spins:50,points:200},{type:'range',from:11,to:20,cash:500,spins:20,points:100}];
+let players=[{id:1,name:'wei***ng',pts:'482.0',bet:'$482,300',profit:'$42,100',reward:'彩金 $5,000',disq:false},{id:2,name:'chen***ao',pts:'398.0',bet:'$398,100',profit:'$28,700',reward:'彩金 $3,000',disq:false},{id:3,name:'lin***yu',pts:'321.5',bet:'$321,500',profit:'$19,300',reward:'彩金 $2,000',disq:false},{id:4,name:'hsu***ei',pts:'298.7',bet:'$298,700',profit:'$15,200',reward:'彩金 $1,000',disq:false},{id:5,name:'wang***ng',pts:'245.2',bet:'$245,200',profit:'$12,100',reward:'彩金 $500',disq:true},{id:6,name:'liao***an',pts:'198.4',bet:'$198,400',profit:'$9,800',reward:'－',disq:false}];
+const logNames=['世界杯體育錦標賽','老虎機月度錦標賽','百家樂高手爭霸'];
+const allLogs=[[{type:'edit',op:'admin_chen',time:'2026/01/28 15:42',diffs:[{field:'排行資格（wang***ng）',before:'有效',after:'已取消資格'}]},{type:'edit',op:'admin_wang',time:'2026/01/10 09:05',diffs:[{field:'第 1 名彩金',before:'$3,000',after:'$5,000'}]},{type:'add',op:'admin_chen',time:'2025/12/28 14:00',diffs:[{field:'錦標賽名稱',after:'世界杯體育錦標賽'},{field:'活動時間',after:'2026/01/01 – 2026/01/31'}]}],[{type:'edit',op:'admin_wang',time:'2026/01/25 14:38',diffs:[{field:'顯示名次',before:'10 名',after:'15 名'}]},{type:'add',op:'admin_wang',time:'2026/01/20 10:00',diffs:[{field:'錦標賽名稱',after:'老虎機月度錦標賽'}]}],[{type:'edit',op:'system',time:'2025/12/31 23:58',diffs:[{field:'活動狀態',before:'進行中',after:'已結束'}]},{type:'add',op:'admin_lin',time:'2025/11/25 16:00',diffs:[{field:'錦標賽名稱',after:'百家樂高手爭霸'}]}]];
+let curLogIdx=0,curLogFilter='all',curDisqId=null,curDisqAction=null;
+
+const riskData=[
+  {id:1,name:'IP 登入限制風控',tag:'rt-ip',tagName:'IP / 帳號',enabled:true,logic:'IP 數量上限為可配置變數，系統合計用戶的登入 IP 與遊戲 IP，當不同 IP 總數超出設定值，且 IP 地區超出原始登入時區範圍時，判定為異常。使用 VPN 視為異常行為，站點本身已有區域限制，時區條件作為輔助判斷。',trigger:'用戶發起取款時，系統即時檢核 IP 條件，條件命中則自動進入風控審核流程。',params:[{label:'IP 數量上限',val:'5',unit:'個'}]},
+  {id:2,name:'下級充值人數風控',tag:'rt-ip',tagName:'代理風控',enabled:true,logic:'以當日為基準往前推算 N 日內，統計下級充值人數，當充值人數未達 X 人時，判定為異常。採滾動計算，每次取款當下即時檢核過去 N 日的數據。',trigger:'上級代理發起取款時，系統即時檢核 N 日內下級充值人數是否達 X 人門檻，條件命中則自動進入風控審核流程。',params:[{label:'統計天數 N',val:'15',unit:'天'},{label:'充值人數門檻 X',val:'10',unit:'人'}]},
+  {id:3,name:'速成代理風控',tag:'rt-ip',tagName:'代理風控',enabled:true,logic:'於 N 日內，當下級單注投注額達 X 金額，且投注次數達 Z 次並獲利時，系統標記該代理層級為異常。速成代理模式通常為上級主導短期大量招募下級配合套利，上下級同步觸發合理。',trigger:'上級或下級任一方發起取款時，三項條件同時命中，上下級同步進入風控審核流程。',params:[{label:'統計天數 N',val:'7',unit:'天'},{label:'單注金額 X',val:'5,000',unit:'元'},{label:'投注次數 Z',val:'3',unit:'次'}]},
+  {id:4,name:'付費率代理風控',tag:'rt-ip',tagName:'代理風控',enabled:true,logic:'以當日為基準往前推算 N 日內，計算：充值人數 ÷ 代理旗下累計總人數 × 100% = 付費率。分母為代理旗下累計總人數，避免統計區間失真。當充值人數達 X 人且付費率達 Y% 時，判定為異常。',trigger:'上級代理發起取款時，兩項條件同時命中則上級進入風控審核攔截；下級帳號同步標記異常，供人工追蹤審查，不直接攔截。',params:[{label:'統計天數 N',val:'30',unit:'天'},{label:'充值人數 X',val:'5',unit:'人'},{label:'付費率門檻 Y',val:'80',unit:'%'}]},
+  {id:5,name:'黑名單 CPF 風控',tag:'rt-cpf',tagName:'CPF 相關',enabled:true,logic:'黑名單來源分為人工手動新增及外部資料庫批量匯入。系統於每個涉及 CPF 的操作環節即時比對黑名單庫，命中即觸發標記與風控審核。黑名單以人工維護為主，存在一定時效性限制，屬已知風險。',trigger:'註冊、充值、取款三個環節，使用黑名單內的 CPF 時，各自獨立觸發標記並進入風控審核流程。',params:[]},
+  {id:6,name:'充提 CPF 不一致風控',tag:'rt-cpf',tagName:'CPF 相關',enabled:true,logic:'系統記錄用戶最近一次充值所使用的 CPF，於取款時比對當前取款 CPF，兩者不一致時自動標記帳號。換綁 CPF 後取款同樣納入比對，不因換綁行為豁免。考量 CPF 存在頻繁更換情況，標記後待取款時才攔截，不直接凍結帳號。',trigger:'用戶發起取款時，系統檢核最近一次充值 CPF 與取款 CPF 是否一致，帳號存在標記且發起取款時，自動攔截並進入人工風控審核流程。',params:[]},
+  {id:7,name:'出款流水風控',tag:'rt-flow',tagName:'流水管控',enabled:true,logic:'以當日為基準往前推算 N 日內，流水基準總額 = N 日內累計充值金額 + 領取優惠金額。全場館合計投注金額須達流水基準總額的 X%，且合計投注局數須達 Y 局，兩項同時達標方可正常取款。',trigger:'用戶發起取款時，任一條件未達標則自動攔截並進入風控審核流程。',params:[{label:'統計天數 N',val:'7',unit:'天'},{label:'流水比例 X',val:'80',unit:'%'},{label:'投注局數 Y',val:'10',unit:'局'}]},
+  {id:8,name:'體育遊戲重複投注風控',tag:'rt-game',tagName:'遊戲行為',enabled:false,logic:'以單場賽事為統計基準，同一賽事中投注盤口相同、投注賠率相同（誤差 ±Z）、單注投注金額達 X、投注次數達 N 次，全部條件同時命中才觸發。相同 IP 或設備號的關聯帳號同步觸發風控。',trigger:'用戶發起取款時（無論賽事是否已結算），全部條件命中則自動攔截取款，關聯帳號同步進入風控審核流程。',params:[{label:'單注金額 X',val:'1,000',unit:'元'},{label:'投注次數 N',val:'5',unit:'次'},{label:'賠率誤差 Z',val:'0.05',unit:''}]},
+  {id:9,name:'體育重新結算風控',tag:'rt-game',tagName:'遊戲行為',enabled:false,logic:'當體育賽事進行重新結算時，系統即時檢核受影響帳戶的餘額變化，若重新結算後帳戶餘額變為負數，則自動標記該帳戶為異常。標記後待用戶發起取款時才觸發攔截，不直接凍結帳號。',trigger:'用戶發起取款時，系統檢核帳戶是否存在因重新結算導致餘額為負數的標記記錄，條件命中則自動攔截取款並進入風控審核流程。',params:[]}
+];
+
+let inboxData=[
+  {id:1,title:'春節活動獎勵已發放',content:'親愛的會員，您的春節活動獎勵已成功發放，請前往個人中心查看。如有任何問題請聯繫客服。',uids:['123456','789012','345678'],status:'sent',op:'admin_chen',time:'2026/01/28 09:00'},
+  {id:2,title:'系統維護通知',content:'系統將於 2026/02/01 02:00–04:00 進行例行維護，期間服務暫停，造成不便敬請見諒。',uids:[],status:'scheduled',op:'admin_wang',time:'2026/01/29 14:00'},
+  {id:3,title:'錦標賽門票已派發，請盡快查收確認您的帳戶',content:'恭喜您達成投注條件，世界杯體育錦標賽門票已自動派發至您的帳戶，活動期間有效，請把握機會參與錦標賽。',uids:['111222','333444','555666','777888','999000','112233','445566'],status:'sent',op:'admin_chen',time:'2026/01/15 10:00'},
+];
+
+/* PAGE */
+function showPage(p,el){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  if(el)el.classList.add('active');
+  const cfg={tournament:{title:'錦標賽管理',bc:'運營活動 / 錦標賽',action:'<button class="btn btn-primary" onclick="openNew()">＋ 新增錦標賽</button>'},collect:{title:'集卡活動管理',bc:'運營活動 / 集卡活動',action:'<button class="btn btn-primary">＋ 新增集卡活動</button>'},risk:{title:'風控管理',bc:'系統管理 / 風控管理',action:''},inbox:{title:'站內信管理',bc:'系統管理 / 站內信',action:'<button class="btn btn-primary" onclick="openInboxNew()">＋ 新增站內信</button>'}};
+  const c=cfg[p]||{};
+  document.getElementById('pageTitle').textContent=c.title||'';
+  document.getElementById('pageBreadcrumb').textContent=c.bc||'';
+  document.getElementById('topActions').innerHTML=c.action||'';
+}
+
+/* TOURNAMENT */
+function openNew(){document.getElementById('configTitle').textContent='新增錦標賽';document.getElementById('configSub').textContent='';document.getElementById('tName').value='';document.getElementById('tStart').value='';document.getElementById('tEnd').value='';document.getElementById('saveBtn').style.display='';document.getElementById('gameLockedWarn').style.display='none';document.getElementById('configModal').classList.add('open');}
+function openView(){document.getElementById('configTitle').textContent='查看配置';document.getElementById('configSub').textContent='世界杯體育錦標賽';document.getElementById('tName').value='世界杯體育錦標賽';document.getElementById('tStart').value='2026-01-01T00:00';document.getElementById('tEnd').value='2026-01-31T23:59';document.getElementById('saveBtn').style.display='none';document.getElementById('gameLockedWarn').style.display='block';document.getElementById('configModal').classList.add('open');}
+function openEdit(){document.getElementById('configTitle').textContent='編輯配置';document.getElementById('configSub').textContent='世界杯體育錦標賽';document.getElementById('tName').value='世界杯體育錦標賽';document.getElementById('tStart').value='2026-01-01T00:00';document.getElementById('tEnd').value='2026-01-31T23:59';document.getElementById('saveBtn').style.display='';document.getElementById('gameLockedWarn').style.display='block';document.getElementById('configModal').classList.add('open');}
+function closeConfig(){document.getElementById('configModal').classList.remove('open');}
+function switchTab(el,id){el.closest('.tabs').querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.closest('.modal').querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));el.classList.add('active');document.getElementById(id).classList.add('active');}
+function toggleTicket(){document.getElementById('ticketConfig').classList.toggle('show',document.getElementById('ticketToggle').checked);}
+function toggleDispatch(el){document.getElementById('manualConfig').classList.toggle('show',el.value==='manual');}
+function toggleRankType(){document.getElementById('rankToWrap').style.display=document.querySelector('input[name="rtype"]:checked').value==='range'?'block':'none';}
+function checkRankMin(){const v=parseInt(document.getElementById('rankDisplay').value)||0;document.getElementById('rankMinWarn').style.display=(v>0&&v<50)?'block':'none';}
+function checkSave(){if(selectedGames.length<2){switchTab(document.querySelectorAll('#configModal .tab')[4],'t5');document.getElementById('gameMinWarn').style.display='block';return;}const v=parseInt(document.getElementById('rankDisplay').value)||0;if(v>0&&v<50){switchTab(document.querySelectorAll('#configModal .tab')[3],'t4');return;}closeConfig();showAlert('儲存成功','錦標賽配置已成功儲存。');}
+function renderRanks(){document.getElementById('rankList').innerHTML=ranks.map((r,i)=>`<div class="rank-item"><div class="rank-header"><div style="display:flex;align-items:center;gap:8px"><span class="rank-badge ${r.type==='single'?'rank-single':'rank-range'}">${r.type==='single'?'單一名次':'區間名次'}</span><span style="font-size:13px;font-weight:600">${r.type==='single'?`第 ${r.from} 名`:`第 ${r.from} – ${r.to} 名`}</span></div><button class="btn btn-sm btn-danger" onclick="removeRank(${i})">移除</button></div><div class="reward-grid"><div class="form-group"><div class="label"><span class="reward-tag reward-cash">彩金</span>（元）</div><input type="number" value="${r.cash}" placeholder="不填則不發放"></div><div class="form-group"><div class="label"><span class="reward-tag reward-spin">Free Spins</span>（次）</div><input type="number" value="${r.spins}" placeholder="不填則不發放"></div><div class="form-group"><div class="label"><span class="reward-tag reward-point">積分</span></div><input type="number" value="${r.points}" placeholder="不填則不發放"></div></div></div>`).join('');}
+function removeRank(i){ranks.splice(i,1);renderRanks();}
+function openAddRank(){document.getElementById('overlapWarn').style.display='none';document.getElementById('rankFrom').value=ranks.length?Math.max(...ranks.map(r=>r.to))+1:1;document.getElementById('rankTo').value=parseInt(document.getElementById('rankFrom').value)+9;document.querySelector('input[name="rtype"][value="single"]').checked=true;document.getElementById('rankToWrap').style.display='none';document.getElementById('addRankModal').classList.add('open');}
+function closeAddRank(){document.getElementById('addRankModal').classList.remove('open');}
+function confirmAddRank(){const type=document.querySelector('input[name="rtype"]:checked').value;const from=parseInt(document.getElementById('rankFrom').value);const to=type==='range'?parseInt(document.getElementById('rankTo').value):from;const w=document.getElementById('overlapWarn');if(!from||from<1){w.textContent='請輸入有效名次。';w.style.display='block';return;}if(type==='range'&&to<from){w.textContent='結束名次不可小於開始名次。';w.style.display='block';return;}const ov=ranks.find(r=>!(to<r.from||from>r.to));if(ov){w.textContent=`第 ${from}${type==='range'?` – ${to}`:''} 名與現有配置重疊，請修正後再新增。`;w.style.display='block';return;}ranks.push({type,from,to,cash:'',spins:'',points:''});ranks.sort((a,b)=>a.from-b.from);renderRanks();closeAddRank();}
+function updateS2(){const v=document.getElementById('s1').value,s2=document.getElementById('s2');s2.innerHTML='<option value="">全部</option>';document.getElementById('s3').innerHTML='<option value="">全部</option>';if(!v)return;if(gameData[v].slots.length)s2.innerHTML+=`<option value="slots">老虎機</option>`;if(gameData[v].live.length)s2.innerHTML+=`<option value="live">真人</option>`;}
+function updateS3(){const v1=document.getElementById('s1').value,v2=document.getElementById('s2').value,s3=document.getElementById('s3');s3.innerHTML='<option value="">全部</option>';if(!v1||!v2)return;(gameData[v1][v2]||[]).forEach(g=>s3.innerHTML+=`<option value="${g}">${g}</option>`);}
+function doSearch(){const fuzzy=document.getElementById('fuzzy').value.toLowerCase().trim();const v1=document.getElementById('s1').value,v2=document.getElementById('s2').value,v3=document.getElementById('s3').value;let results=[];Object.entries(gameData).forEach(([vendor,types])=>{if(v1&&vendor!==v1)return;const vName={pg:'PG Soft',evo:'Evolution',cq9:'CQ9'}[vendor];Object.entries(types).forEach(([type,games])=>{if(v2&&type!==v2)return;games.forEach(g=>{if(v3&&g!==v3)return;if(fuzzy&&!g.toLowerCase().includes(fuzzy)&&!vName.toLowerCase().includes(fuzzy))return;results.push({name:g,vendor:vName});});});});const el=document.getElementById('resultList');el.innerHTML=results.length?results.map(r=>{const checked=selectedGames.some(s=>s.name===r.name&&s.vendor===r.vendor);return `<label style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid ${checked?'#185FA5':'#ddd'};border-radius:20px;font-size:12px;cursor:pointer;background:${checked?'#EBF5FB':'#fff'};white-space:nowrap"><input type="checkbox" style="width:auto" ${checked?'checked':''} onchange="toggleGame(this,'${r.name}','${r.vendor}')">${r.name}<span style="color:#bbb;font-size:11px">（${r.vendor}）</span></label>`;}).join(''):'<span style="font-size:13px;color:#bbb">無符合條件的遊戲</span>';document.getElementById('searchResult').style.display='block';}
+function toggleGame(el,name,vendor){if(el.checked){if(!selectedGames.some(s=>s.name===name&&s.vendor===vendor))selectedGames.push({name,vendor,locked:false});}else{const idx=selectedGames.findIndex(s=>s.name===name&&s.vendor===vendor);if(idx>-1){if(selectedGames[idx].locked){el.checked=true;showAlert('無法移除','活動進行中，已選遊戲不可移除，避免影響積分計算。');return;}selectedGames.splice(idx,1);}}renderSelected();}
+function removeGame(el){const t=el.closest('.game-tag');const idx=selectedGames.findIndex(s=>s.name===t.dataset.name&&s.vendor===t.dataset.vendor);if(idx>-1&&!selectedGames[idx].locked){selectedGames.splice(idx,1);renderSelected();}}
+function renderSelected(){document.getElementById('selCount').textContent=selectedGames.length;document.getElementById('selectedGames').innerHTML=selectedGames.map(g=>g.locked?`<span class="locked-tag" title="活動進行中，不可移除">${g.name}<span style="font-size:11px;color:#bbb">（${g.vendor}）</span></span>`:`<span class="game-tag" data-name="${g.name}" data-vendor="${g.vendor}">${g.name}<span style="font-size:11px;color:#bbb">（${g.vendor}）</span><span class="rm" onclick="removeGame(this)">×</span></span>`).join('');const m=document.getElementById('gameMinWarn');if(m)m.style.display=selectedGames.length<2?'block':'none';}
+
+/* DATA */
+function openData(){document.getElementById('dataModal').classList.add('open');filterRank();}
+function closeData(){document.getElementById('dataModal').classList.remove('open');}
+function filterRank(){const search=document.getElementById('searchPlayer').value.toLowerCase();const status=document.getElementById('filterStatus').value;let vRank=0,rows='';players.forEach(p=>{if(search&&!p.name.toLowerCase().includes(search))return;if(status==='valid'&&p.disq)return;if(status==='disq'&&!p.disq)return;if(!p.disq)vRank++;const dr=p.disq?'－':vRank;const rc=p.disq?'rn-n':vRank<=3?['rn-1','rn-2','rn-3'][vRank-1]:'rn-n';rows+=`<tr class="${p.disq?'disq-row':''}"><td><span class="rank-num ${rc}">${dr}</span></td><td>${p.name}</td><td>${p.pts}</td><td>${p.bet}</td><td>${p.profit}</td><td style="font-size:12px;color:#999">${p.disq?'<span class="badge badge-disq">已取消資格</span>':p.reward}</td><td><span class="badge ${p.disq?'badge-disq':'badge-valid'}">${p.disq?'已取消':'有效'}</span></td><td>${p.disq?`<button class="btn btn-sm btn-success" onclick="askDisq('restore',${p.id})">恢復資格</button>`:`<button class="btn btn-sm btn-danger" onclick="askDisq('disq',${p.id})">取消資格</button>`}</td></tr>`;});document.getElementById('rankBody').innerHTML=rows||'<tr><td colspan="8" style="text-align:center;color:#bbb;padding:20px">無符合條件的資料</td></tr>';document.getElementById('disqCount').textContent=players.filter(p=>p.disq).length;}
+function askDisq(action,id){const p=players.find(x=>x.id===id);curDisqAction=action;curDisqId=id;document.getElementById('disqReason').value='';if(action==='disq'){document.getElementById('disqTitle').textContent='取消排行資格';document.getElementById('disqBody').innerHTML=`確認要取消 <strong>${p.name}</strong> 的排行資格嗎？取消後不列入排名，名次由後續遞補。`;document.getElementById('disqBtn').className='btn btn-sm btn-danger';document.getElementById('disqBtn').textContent='確認取消資格';}else{document.getElementById('disqTitle').textContent='恢復排行資格';document.getElementById('disqBody').innerHTML=`確認要恢復 <strong>${p.name}</strong> 的排行資格嗎？恢復後依積分重新列入排名。`;document.getElementById('disqBtn').className='btn btn-primary btn-sm';document.getElementById('disqBtn').textContent='確認恢復資格';}document.getElementById('disqModal').classList.add('open');}
+function doDisq(){players.find(x=>x.id===curDisqId).disq=(curDisqAction==='disq');closeDisq();filterRank();}
+function closeDisq(){document.getElementById('disqModal').classList.remove('open');}
+
+/* LOG */
+function openLog(idx){curLogIdx=idx;curLogFilter='all';document.querySelectorAll('.log-tag').forEach((t,i)=>t.classList.toggle('active',i===0));document.getElementById('logSub').textContent=logNames[idx];renderLog();document.getElementById('logModal').classList.add('open');}
+function closeLog(){document.getElementById('logModal').classList.remove('open');}
+function flog(el,type){document.querySelectorAll('.log-tag').forEach(t=>t.classList.remove('active'));el.classList.add('active');curLogFilter=type;renderLog();}
+function renderLog(){const data=curLogFilter==='all'?allLogs[curLogIdx]:allLogs[curLogIdx].filter(l=>l.type===curLogFilter);if(!data.length){document.getElementById('logList').innerHTML='<div style="color:#bbb;font-size:13px;padding:20px 0;text-align:center">無相關日誌記錄</div>';return;}document.getElementById('logList').innerHTML=data.map(l=>{const isAdd=l.type==='add';return `<div class="log-item"><div class="log-header"><span style="display:inline-flex;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500;background:${isAdd?'#D5F5E3':'#D6EAF8'};color:${isAdd?'#1E8449':'#1A5276'}">${isAdd?'新增':'修改'}</span><span style="font-size:12px;color:#bbb">操作人：<strong style="color:#666">${l.op}</strong>　${l.time}</span></div><table class="diff-table"><thead><tr><th style="width:36%">欄位</th>${isAdd?'<th>新增內容</th>':'<th>更新前</th><th>更新後</th>'}</tr></thead><tbody>${l.diffs.map(d=>`<tr><td style="font-weight:500">${d.field}</td>${isAdd?`<td>${d.after}</td>`:`<td><span class="diff-before">${d.before}</span></td><td><span class="diff-after">${d.after}</span></td>`}</tr>`).join('')}</tbody></table></div>`;}).join('');}
+
+/* RISK */
+function renderRisk(){document.getElementById('riskList').innerHTML=riskData.map(r=>`<div class="risk-card"><div class="risk-header" onclick="toggleRisk(${r.id})"><div class="risk-title"><span style="font-size:14px;color:#bbb;width:18px" id="rArrow${r.id}">▶</span>${r.name}<span class="risk-tag ${r.tag}">${r.tagName}</span></div><div style="display:flex;align-items:center;gap:10px" onclick="event.stopPropagation()"><span class="badge ${r.enabled?'badge-on':'badge-off'}" id="rBadge${r.id}">${r.enabled?'已啟用':'已關閉'}</span><label class="toggle"><input type="checkbox" ${r.enabled?'checked':''} onchange="toggleRiskEnabled(${r.id},this)"><span class="toggle-slider"></span></label></div></div><div class="risk-body" id="rBody${r.id}"><div style="margin-top:12px"><div style="font-size:12px;font-weight:600;color:#888;margin-bottom:4px">風控邏輯</div><div style="font-size:12px;color:#555;line-height:1.7;padding:10px 12px;background:#f8f9fa;border-radius:8px;border:1px solid #eee">${r.logic}</div></div><div style="margin-top:10px"><div style="font-size:12px;font-weight:600;color:#888;margin-bottom:4px">觸發場景</div><div style="font-size:12px;color:#555;line-height:1.7;padding:10px 12px;background:#f8f9fa;border-radius:8px;border:1px solid #eee">${r.trigger}</div></div>${r.params.length?`<div style="margin-top:12px"><div style="font-size:12px;font-weight:600;color:#888;margin-bottom:8px">參數配置</div><div class="params-grid">${r.params.map(p=>`<div class="form-group"><div class="label">${p.label}</div><div style="display:flex;align-items:center;gap:6px"><input type="text" value="${p.val}" style="width:80px">${p.unit?`<span style="font-size:12px;color:#888">${p.unit}</span>`:''}</div></div>`).join('')}</div><div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-primary btn-sm">儲存參數</button></div></div>`:''}</div></div>`).join('');}
+function toggleRisk(id){const b=document.getElementById('rBody'+id);const a=document.getElementById('rArrow'+id);const open=b.classList.contains('open');b.classList.toggle('open',!open);a.textContent=open?'▶':'▼';}
+function toggleRiskEnabled(id,el){const r=riskData.find(x=>x.id===id);r.enabled=el.checked;document.getElementById('rBadge'+id).textContent=r.enabled?'已啟用':'已關閉';document.getElementById('rBadge'+id).className='badge '+(r.enabled?'badge-on':'badge-off');}
+
+/* INBOX */
+function renderInbox(){document.getElementById('inboxTable').innerHTML=inboxData.map(m=>{const uidsHtml=m.uids.length===0?'<span style="color:#bbb;font-size:12px">所有會員</span>':m.uids.slice(0,3).map(u=>`<span class="uid-tag">${u}</span>`).join('')+(m.uids.length>3?`<button class="more-btn" onclick="showUids(${m.id})">+${m.uids.length-3} 更多</button>`:'');const statusMap={sent:'badge-sent',scheduled:'badge-scheduled'};const statusText={sent:'已發送',scheduled:'預約發送'};const title=m.title.length>50?m.title.slice(0,50)+'…':m.title;const content=m.content.length>100?m.content.slice(0,100)+'…':m.content;return `<tr><td style="font-weight:500;max-width:180px">${title}</td><td style="font-size:12px;color:#666;max-width:220px">${content}</td><td style="max-width:160px">${uidsHtml}</td><td><span class="badge ${statusMap[m.status]||'badge-inactive'}">${statusText[m.status]||m.status}</span></td><td><div class="op-name">${m.op}</div></td><td><div style="font-size:12px;color:#bbb">${m.time}</div></td><td><div class="ops"><button class="btn btn-sm" onclick="openInboxView(${m.id})">查看</button>${m.status!=='sent'?`<button class="btn btn-sm" onclick="openInboxEdit(${m.id})">編輯</button>`:''}</div></td></tr>`;}).join('');}
+function showUids(id){const m=inboxData.find(x=>x.id===id);document.getElementById('uidList').innerHTML=m.uids.map(u=>`<span class="uid-tag" style="font-size:12px;padding:4px 10px">${u}</span>`).join('');document.getElementById('uidModal').classList.add('open');}
+function openInboxNew(){document.getElementById('inboxModalTitle').textContent='新增站內信';document.getElementById('inboxTitle').value='';document.getElementById('inboxContent').value='';document.getElementById('inboxTarget').value='all';document.getElementById('uidInput').style.display='none';document.getElementById('importUidBtn').style.display='none';document.getElementById('externalUrl').value='';document.getElementById('urlIcon').textContent='';document.getElementById('externalText').value='';document.getElementById('internalLink').value='';document.getElementById('internalText').value='';document.querySelector('input[name="sendType"][value="now"]').checked=true;document.getElementById('scheduleConfig').style.display='none';updateTitleCount();document.getElementById('inboxModal').classList.add('open');}
+function openInboxView(id){const m=inboxData.find(x=>x.id===id);document.getElementById('inboxModalTitle').textContent='查看站內信';document.getElementById('inboxTitle').value=m.title;document.getElementById('inboxContent').value=m.content;if(m.uids.length){document.getElementById('inboxTarget').value='uid';document.getElementById('uidText').value=m.uids.join('\n');document.getElementById('uidInput').style.display='block';document.getElementById('importUidBtn').style.display='inline-flex';}else{document.getElementById('inboxTarget').value='all';}updateTitleCount();document.getElementById('inboxModal').classList.add('open');}
+function openInboxEdit(id){openInboxView(id);document.getElementById('inboxModalTitle').textContent='編輯站內信';}
+function closeInbox(){document.getElementById('inboxModal').classList.remove('open');}
+function toggleInboxTarget(){const v=document.getElementById('inboxTarget').value;document.getElementById('uidInput').style.display=v==='uid'?'block':'none';document.getElementById('importUidBtn').style.display=v==='uid'?'inline-flex':'none';}
+function updateTitleCount(){const v=document.getElementById('inboxTitle').value.length;document.getElementById('titleCount').textContent=v+' / 50';document.getElementById('titleCount').style.color=v>=50?'#c0392b':'#bbb';}
+function toggleSendType(){document.getElementById('scheduleConfig').style.display=document.querySelector('input[name="sendType"]:checked').value==='schedule'?'block':'none';}
+let urlTimer=null;
+function validateUrl(){clearTimeout(urlTimer);const v=document.getElementById('externalUrl').value.trim();document.getElementById('urlIcon').textContent='';if(!v)return;urlTimer=setTimeout(()=>{try{new URL('https://'+v);document.getElementById('urlIcon').textContent='✅';}catch(e){document.getElementById('urlIcon').textContent='❌';}},700);}
+function saveInbox(){const title=document.getElementById('inboxTitle').value.trim();const content=document.getElementById('inboxContent').value.trim();if(!title||!content){showAlert('必填欄位未填','請填寫發送標題與發送內容。');return;}closeInbox();showAlert('發送成功','站內信已成功發送 / 排程。');}
+
+/* ALERT */
+function showAlert(title,body){document.getElementById('alertTitle').textContent=title;document.getElementById('alertBody').textContent=body;document.getElementById('alertModal').classList.add('open');}
+
+/* CLOSE ON BG */
+['configModal','dataModal','logModal','inboxModal'].forEach(id=>{document.getElementById(id).addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});});
+
+/* INIT */
+renderRanks();renderSelected();renderRisk();renderInbox();
+</script>
+</body>
+</html>
